@@ -14,3 +14,8 @@ authors = [
 
 [project.urls]
 Homepage = "https://github.com/iCodePoet/samsung-ac-decoder"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+]
