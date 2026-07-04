@@ -1,0 +1,16 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "samsung-ac-ir-timer"
+version = "0.1.0"
+description = "A decoder for Samsung Air Conditioner dual-timer IR payloads"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [
+    { name = "jay-flow", email = "jay-flow@example.com" }
+]
+
+[project.urls]
+Homepage = "https://github.com/jay-flow/samsung-ac-ir-timer-protocol"
