@@ -44,47 +44,39 @@ Even after successfully unpacking the nibbles into an integer `val`, the resulti
 
 ---
 
-## 🛠 Python Decoder Implementation
+## 🛠 Usage (Python Decoder)
 
-Here is the Python algorithm to flawlessly extract both On-Timers and Off-Timers from a raw 21-byte Samsung IR payload array:
+Using the `samsung-ac-decoder` package is extremely simple. Just pass the 21-byte raw IR payload to the `decode()` function, and it will parse all the state information (Power, Mode, Temp, Fan, and Dual-Timers).
 
 ```python
-def decode_samsung_timers(bytes_arr):
-    if len(bytes_arr) < 21:
-        return
+from samsung_ac_decoder import decode
 
-    # 1. Extract Off-Timer (Byte 10 Lower + Byte 9 Upper)
-    off_val = ((bytes_arr[10] & 0x0F) << 4) + (bytes_arr[9] >> 4)
-    off_hours = 0.0
-    
-    if off_val > 0:
-        off_hours = (off_val // 8) + (0.5 if off_val % 8 == 3 else 0.0)
+# Example: 21-byte raw IR payload captured from an AC remote
+raw_payload = [
+    0x02, 0x92, 0x0F, 0x00, 0x00, 0x00, 0xF0, 0x01, 
+    0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xC0, 
+    0x00, 0x00, 0x00, 0x00, 0x00
+]
 
-    # 2. Extract On-Timer (Byte 11 Lower + Byte 10 Upper)
-    on_val = ((bytes_arr[11] & 0x0F) << 4) + (bytes_arr[10] >> 4)
-    on_hours = 0.0
-    
-    if on_val > 0:
-        on_hours = (on_val // 8) + (0.5 if on_val % 8 == 3 else 0.0)
+state = decode(raw_payload)
+print(state)
+```
 
-    # 3. Print Results
-    if off_hours > 0 and on_hours > 0:
-        print(f"Dual Timer Active: On in {on_hours:.1f}h, Off in {off_hours:.1f}h")
-    elif off_hours > 0:
-        print(f"Off Timer Active: Off in {off_hours:.1f}h")
-    elif on_hours > 0:
-        print(f"On Timer Active: On in {on_hours:.1f}h")
-    else:
-        print("No Active Timers.")
-
-# Example Payload: On Timer 0.5h, Off Timer 1.0h
-# B9 = 0x8F, B10 = 0x30, B11 = 0x00
-sample_bytes = [0x00] * 21
-sample_bytes[9] = 0x8F
-sample_bytes[10] = 0x30
-sample_bytes[11] = 0x00
-
-decode_samsung_timers(sample_bytes)
+**Example Output:**
+```python
+{
+    'power': True,
+    'power_str': 'ON',
+    'mode': 1,
+    'mode_str': 'Cool',
+    'temp': 24,
+    'fan': 0,
+    'fan_str': 'Auto',
+    'timers': {
+        'on_hours': 0.0,
+        'off_hours': 0.0
+    }
+}
 ```
 
 ## Verified Devices

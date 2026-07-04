@@ -1,6 +1,6 @@
 from typing import List, Dict, Optional
 
-def decode_samsung_timers(bytes_arr: List[int]) -> Optional[Dict[str, float]]:
+def _decode_timers(bytes_arr: List[int]) -> Optional[Dict[str, float]]:
     """
     Decodes the On and Off timers from a 21-byte Samsung Air Conditioner IR payload.
     
@@ -40,7 +40,7 @@ def decode_samsung_timers(bytes_arr: List[int]) -> Optional[Dict[str, float]]:
 MODE_LABELS = {0: "Auto", 1: "Cool", 2: "Dry", 3: "Fan", 4: "Heat", 8: "Auto (Legacy)"}
 FAN_LABELS = {0: "Auto", 2: "Low", 4: "Med", 5: "High"}
 
-def decode_samsung_ac_state(bytes_arr: List[int]) -> Optional[Dict[str, any]]:
+def decode(bytes_arr: List[int]) -> Optional[Dict[str, any]]:
     """
     Decodes the full state (power, mode, temp, fan, timers) from a Samsung AC IR payload.
     
@@ -71,7 +71,7 @@ def decode_samsung_ac_state(bytes_arr: List[int]) -> Optional[Dict[str, any]]:
     }
     
     if len(bytes_arr) >= 21:
-        state["timers"] = decode_samsung_timers(bytes_arr)
+        state["timers"] = _decode_timers(bytes_arr)
         
     return state
 
