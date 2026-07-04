@@ -89,7 +89,7 @@ decode_samsung_timers(sample_bytes)
 
 ## Verified Devices
 
-This reverse engineering was tested and verified to work flawlessly on the following hardware:
+This reverse engineering was tested and verified to work on the following hardware:
 - **Samsung WindFree™ 1-Way Cassette** 
   - Model Numbers: `AC009BN1DCH` (9K Btu), `AC012BN1DCH` (12K Btu), `AC018BN1DCH` (18K Btu)
 
