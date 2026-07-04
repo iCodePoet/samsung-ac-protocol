@@ -1,4 +1,16 @@
-def decode_samsung_timers(bytes_arr):
+from typing import List, Dict, Optional
+
+def decode_samsung_timers(bytes_arr: List[int]) -> Optional[Dict[str, float]]:
+    """
+    Decodes the On and Off timers from a 21-byte Samsung Air Conditioner IR payload.
+    
+    Args:
+        bytes_arr (List[int]): An array of 21 integers representing the raw IR bytes.
+        
+    Returns:
+        Optional[Dict[str, float]]: A dictionary containing 'on_hours' and 'off_hours' as floats.
+                                    Returns None if the payload length is invalid.
+    """
     if len(bytes_arr) < 21:
         return None
 
