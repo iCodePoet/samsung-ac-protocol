@@ -1,27 +1,29 @@
 from typing import List
 from .models import SamsungACRequest
+from .checksum import apply_checksum
 
-def _count_bits(v: int) -> int:
-    return bin(v).count('1')
 
 def _calculate_checksum(raw: List[int]) -> None:
-    # Section 1
-    sum1 = 255 - (_count_bits(raw[0]) + _count_bits(raw[1] & 0x0F) + _count_bits(raw[2] & 0xF0) + 
-                  _count_bits(raw[3]) + _count_bits(raw[4]) + _count_bits(raw[5]) + _count_bits(raw[6]))
-    raw[1] = (raw[1] & 0x0F) | ((sum1 & 0xF) << 4)
-    raw[2] = (raw[2] & 0xF0) | ((sum1 >> 4) & 0xF)
-    
-    # Section 2
-    sum2 = 255 - (_count_bits(raw[7]) + _count_bits(raw[8] & 0x0F) + _count_bits(raw[9] & 0xF0) + 
-                  _count_bits(raw[10]) + _count_bits(raw[11]) + _count_bits(raw[12]) + _count_bits(raw[13]))
-    raw[8] = (raw[8] & 0x0F) | ((sum2 & 0xF) << 4)
-    raw[9] = (raw[9] & 0xF0) | ((sum2 >> 4) & 0xF)
-    
-    # Section 3
-    sum3 = 255 - (_count_bits(raw[14]) + _count_bits(raw[15] & 0x0F) + _count_bits(raw[16] & 0xF0) + 
-                  _count_bits(raw[17]) + _count_bits(raw[18]) + _count_bits(raw[19]) + _count_bits(raw[20]))
-    raw[15] = (raw[15] & 0x0F) | ((sum3 & 0xF) << 4)
-    raw[16] = (raw[16] & 0xF0) | ((sum3 >> 4) & 0xF)
+    apply_checksum(raw)
+
+
+def _validate_request(request: SamsungACRequest) -> None:
+    if request.mode not in {0, 1, 2, 3, 4}:
+        raise ValueError("mode must be one of 0, 1, 2, 3, or 4.")
+    if not 16 <= request.temp <= 30:
+        raise ValueError("temp must be between 16 and 30 Celsius.")
+    if request.fan not in {0, 2, 4, 5}:
+        raise ValueError("fan must be one of 0, 2, 4, or 5.")
+    if request.timer_mode not in {0, 1, 2, 3}:
+        raise ValueError("timer_mode must be one of 0, 1, 2, or 3.")
+    if not 0 <= request.timer_15m <= 96:
+        raise ValueError("timer_15m must be between 0 and 96.")
+    if request.timer_mode == 0 and request.timer_15m != 0:
+        raise ValueError("timer_15m must be 0 when timer_mode is 0.")
+    if request.timer_mode in {1, 2} and request.timer_15m == 0:
+        raise ValueError("timer_15m must be greater than 0 for on/off timers.")
+    if request.timer_mode == 3 and request.timer_15m not in {0, 4}:
+        raise ValueError("timer_15m must be 0 or 4 for timer_mode 3.")
 
 
 def encode(request: SamsungACRequest) -> List[int]:
@@ -34,6 +36,8 @@ def encode(request: SamsungACRequest) -> List[int]:
     Returns:
         List[int]: A 21-byte array representing the IR payload.
     """
+    _validate_request(request)
+
     raw = [
         0x02, 0x92, 0x0F, 0x00, 0x00, 0x00, 0xF0,
         0x01, 0xD2, 0x0F, 0x00, 0x00, 0x00, 0x00,

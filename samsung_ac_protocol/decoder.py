@@ -1,10 +1,11 @@
 from typing import List, Optional
 from .models import SamsungACTimers, SamsungACState
+from .checksum import has_valid_checksum, validate_bytes
 
 MODE_LABELS = {0: "Auto", 1: "Cool", 2: "Dry", 3: "Fan", 4: "Heat", 8: "Auto (Legacy)"}
 FAN_LABELS = {0: "Auto", 2: "Low", 4: "Med", 5: "High"}
 
-def _decode_timers(bytes_arr: List[int]) -> Optional[SamsungACTimers]:
+def decode_timers(bytes_arr: List[int]) -> Optional[SamsungACTimers]:
     if len(bytes_arr) < 21:
         return None
 
@@ -38,7 +39,11 @@ def _decode_timers(bytes_arr: List[int]) -> Optional[SamsungACTimers]:
 
     return SamsungACTimers(on_hours=on_hours, off_hours=off_hours)
 
-def decode(bytes_arr: List[int]) -> Optional[SamsungACState]:
+def _decode_timers(bytes_arr: List[int]) -> Optional[SamsungACTimers]:
+    return decode_timers(bytes_arr)
+
+
+def decode(bytes_arr: List[int], validate_checksum: bool = False) -> Optional[SamsungACState]:
     """
     Decodes the full state (power, mode, temp, fan, timers) from a Samsung AC IR payload.
     
@@ -48,6 +53,13 @@ def decode(bytes_arr: List[int]) -> Optional[SamsungACState]:
     Returns:
         Optional[SamsungACState]: An object containing the decoded state.
     """
+    if validate_checksum:
+        validate_bytes(bytes_arr)
+        if len(bytes_arr) not in {14, 21}:
+            raise ValueError("Payload length must be 14 or 21 bytes for checksum validation.")
+        if not has_valid_checksum(bytes_arr):
+            raise ValueError("Payload checksum is invalid.")
+
     if len(bytes_arr) < 14:
         return None
         
@@ -69,6 +81,6 @@ def decode(bytes_arr: List[int]) -> Optional[SamsungACState]:
     )
     
     if len(bytes_arr) >= 21:
-        state.timers = _decode_timers(bytes_arr)
+        state.timers = decode_timers(bytes_arr)
         
     return state

@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "samsung-ac-protocol"
 version = "0.1.0"
-description = "A lightweight, zero-dependency decoder for Samsung AC IR payloads"
+description = "A lightweight, zero-dependency codec for Samsung AC IR payloads"
 readme = "README.md"
 requires-python = ">=3.8"
 authors = [

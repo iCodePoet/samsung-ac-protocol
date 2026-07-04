@@ -1,6 +1,6 @@
 # Samsung AC IR Protocol 🕵️‍♂️❄️
 
-A Python package for full encoding and decoding of Samsung Air Conditioner IR remote payloads, featuring a complete reverse-engineered algorithm for their obscure dual-timer (On/Off) binary compression and checksum generation.
+A Python package for encoding and decoding Samsung Air Conditioner IR remote payloads, featuring reverse-engineered checksum handling and timer decoding for Samsung's compact On/Off timer representation.
 
 ## Disclaimer / Limitations
 ⚠️ **Note:** This protocol was entirely reverse-engineered through observation. While it has been tested on the models listed below, **there is no guarantee that it works perfectly or reliably even for those specific devices**, let alone other Samsung AC models or edge cases. There may be additional hidden flags or behaviors in other bytes that we have yet to discover. Use this library strictly at your own risk and feel free to contribute if you find discrepancies!
@@ -11,7 +11,7 @@ While standard Samsung AC IR protocols (Power, Temp, Mode, Fan) are well documen
 
 When observing the raw IR hex bytes sent by a Samsung remote while setting both "On Timers" and "Off Timers", the data did not simply represent 15-minute intervals. Furthermore, setting an Off Timer unexpectedly changed bytes associated with the On Timer. 
 
-Through meticulous raw byte analysis, we discovered that Samsung employs a highly compact bit-shifting and packing algorithm to fit **two independent timer durations (On and Off) spanning up to 24 hours into just 2.5 bytes of data!**
+Through raw byte analysis, we discovered that Samsung employs a compact bit-shifting and packing algorithm to fit timer durations into just 2.5 bytes of data.
 
 ---
 
@@ -79,8 +79,22 @@ state = decode(raw_payload)
 print(state)
 ```
 
+If you want the decoder to reject corrupted captures, enable checksum validation:
+
+```python
+state = decode(raw_payload, validate_checksum=True)
+```
+
+You can also decode the timer fields directly:
+
+```python
+from samsung_ac_protocol import decode_timers
+
+timers = decode_timers(raw_payload)
+```
+
 ### Encoding & Timings (IR Blasting)
-You can encode a desired state back into a 21-byte payload, and optionally convert it to raw microsecond timings to send directly to an IR LED.
+You can encode a desired state back into a 21-byte payload, and optionally convert it to raw microsecond timings to send directly to an IR LED. The encoder validates mode, temperature, fan, and timer ranges before generating bytes.
 
 ```python
 from samsung_ac_protocol import encode, to_timings, SamsungACRequest
@@ -100,6 +114,14 @@ payload_bytes = encode(req)
 # 2. Generate 347 timing pulses for IR transmission
 timings = to_timings(payload_bytes)
 ```
+
+Supported encoder ranges:
+
+- `mode`: `0` Auto, `1` Cool, `2` Dry, `3` Fan, `4` Heat
+- `temp`: `16` through `30`
+- `fan`: `0` Auto, `2` Low, `4` Medium, `5` High
+- `timer_mode`: `0` None, `1` On Timer, `2` Off Timer, `3` fixed special timer mode
+- `timer_15m`: `0` through `96`, representing 15-minute units up to 24 hours. On/Off timers require a value greater than `0`; `timer_mode=3` accepts only `0` or `4`.
 
 
 ## Verified Devices

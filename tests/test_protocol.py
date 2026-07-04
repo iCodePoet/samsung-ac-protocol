@@ -1,8 +1,8 @@
 import pytest
-from samsung_ac_protocol import _decode_timers, decode, encode, SamsungACRequest
+from samsung_ac_protocol import decode_timers, decode, encode, SamsungACRequest
 
 def test_decode_short_payload():
-    assert _decode_timers([0x00] * 20) is None
+    assert decode_timers([0x00] * 20) is None
 
 def test_encode_and_decode_loop():
     """Test that we can encode a state and immediately decode it perfectly."""
@@ -35,3 +35,35 @@ def test_encode_timers():
     state = decode(raw)
     assert state.timers.on_hours == 1.5
     assert state.timers.off_hours == 0.0
+
+
+@pytest.mark.parametrize(
+    ("ac_request", "message"),
+    [
+        (SamsungACRequest(power=True, mode=9, temp=24, fan=4), "mode"),
+        (SamsungACRequest(power=True, mode=1, temp=15, fan=4), "temp"),
+        (SamsungACRequest(power=True, mode=1, temp=24, fan=7), "fan"),
+        (SamsungACRequest(power=True, mode=1, temp=24, fan=4, timer_mode=9), "timer_mode"),
+        (SamsungACRequest(power=True, mode=1, temp=24, fan=4, timer_mode=1, timer_15m=97), "timer_15m"),
+        (SamsungACRequest(power=True, mode=1, temp=24, fan=4, timer_mode=3, timer_15m=8), "timer_15m"),
+    ],
+)
+def test_encode_rejects_invalid_request_values(ac_request, message):
+    with pytest.raises(ValueError, match=message):
+        encode(ac_request)
+
+
+def test_decode_rejects_payload_with_invalid_checksum_when_validation_enabled():
+    raw = encode(SamsungACRequest(power=True, mode=1, temp=24, fan=4))
+    raw[20] ^= 0x10
+
+    with pytest.raises(ValueError, match="checksum"):
+        decode(raw, validate_checksum=True)
+
+
+def test_decode_rejects_non_byte_values_when_validation_enabled():
+    raw = encode(SamsungACRequest(power=True, mode=1, temp=24, fan=4))
+    raw[0] = 256
+
+    with pytest.raises(ValueError, match="byte"):
+        decode(raw, validate_checksum=True)
