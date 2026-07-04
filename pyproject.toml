@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "samsung-ac-decoder"
-version = "0.3.0"
-description = "A decoder for Samsung Air Conditioner dual-timer IR payloads"
+name = "samsung-ac-protocol"
+version = "0.1.0"
+description = "A lightweight, zero-dependency decoder for Samsung AC IR payloads"
 readme = "README.md"
 requires-python = ">=3.8"
 authors = [
